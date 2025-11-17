@@ -1,0 +1,94 @@
+TST_Tubes_Implementation/
+│
+├── 📄 Configuration & Setup Files
+│   ├── .env.example                    # Environment variables template
+│   ├── .gitignore                      # Git ignore patterns
+│   ├── requirements.txt                # Python dependencies
+│   ├── setup.sh                        # Automated setup script (executable)
+│   └── test_api.sh                     # API testing script (executable)
+│
+├── 📖 Documentation Files
+│   ├── README.md                       # Complete user guide & setup
+│   ├── ARCHITECTURE.md                 # System architecture & diagrams
+│   ├── EXAMPLES.md                     # 10+ API usage examples
+│   ├── IMPLEMENTATION_SUMMARY.md       # Implementation checklist
+│   └── COMPLETE.md                     # Final completion summary
+│
+└── 📦 app/                             # Main Application Package
+    │
+    ├── main.py                         # FastAPI application entry
+    ├── config.py                       # Settings management
+    │
+    ├── 🏛️ domain/                      # BC1: CATALOG
+    │   ├── __init__.py
+    │   └── models.py
+    │       ├── Cafe (Entity)
+    │       ├── Location (Value Object)
+    │       ├── Rating (Value Object)
+    │       └── PriceRange (Enum)
+    │
+    ├── 🔌 infrastructure/               # External Integrations
+    │   ├── __init__.py
+    │   └── google_places_client.py
+    │       ├── GooglePlacesClient
+    │       ├── search_nearby_cafes()
+    │       ├── get_place_details()
+    │       └── Error handling
+    │
+    ├── ⚙️ services/                     # Business Logic
+    │   ├── __init__.py
+    │   ├── search_service.py           # BC2: SEARCH
+    │   │   ├── SearchService
+    │   │   ├── search_cafes()
+    │   │   ├── calculate_distance()
+    │   │   └── _map_google_result_to_cafe()
+    │   │
+    │   └── recommendation_service.py    # BC3: RECOMMENDATION
+    │       ├── RecommendationService
+    │       ├── filter_and_rank_cafes()
+    │       └── get_recommendations()
+    │
+    ├── 🌐 api/                          # HTTP API Layer
+    │   ├── __init__.py
+    │   └── routers/
+    │       ├── __init__.py
+    │       ├── search.py
+    │       │   └── GET /api/v1/search
+    │       │       ├── Query: lat, lng, radius
+    │       │       └── Returns: SearchResponse
+    │       │
+    │       └── recommendations.py
+    │           └── GET /api/v1/recommendations
+    │               ├── Query: lat, lng, radius, min_rating, price_range, limit
+    │               └── Returns: RecommendationResponse
+    │
+    └── 📋 schemas/                      # Pydantic Models
+        ├── __init__.py
+        └── responses.py
+            ├── CafeResponse
+            ├── SearchResponse
+            ├── RecommendationResponse
+            └── ErrorResponse
+
+══════════════════════════════════════════════════════════════════
+File Count Summary:
+══════════════════════════════════════════════════════════════════
+Python Files (.py):           13 files
+Documentation Files (.md):     5 files
+Configuration Files:           5 files
+Shell Scripts (.sh):           2 files
+──────────────────────────────────────────────────────────────────
+TOTAL:                        25 files
+══════════════════════════════════════════════════════════════════
+
+Key Components:
+══════════════════════════════════════════════════════════════════
+✅ Domain Models          (BC1: Catalog)
+✅ Google Places Client   (Infrastructure)
+✅ Search Service         (BC2: Search)
+✅ Recommendation Service (BC3: Recommendation)
+✅ API Routers            (2 endpoints)
+✅ Response Schemas       (Pydantic validation)
+✅ Configuration          (Environment variables)
+✅ Documentation          (5 comprehensive guides)
+══════════════════════════════════════════════════════════════════
