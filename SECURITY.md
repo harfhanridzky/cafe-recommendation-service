@@ -153,3 +153,9 @@ async def search_cafes(api_key: str = Depends(api_key_header)):
 ---
 
 **Remember**: Prevention is better than revocation! Always verify before `git push`.
+
+
+Location {
+    latitude: float  
+    longitude: float
+}

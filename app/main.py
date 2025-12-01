@@ -4,13 +4,15 @@ Coordinates all bounded contexts:
 - BC1 (Catalog): Domain models and mapping
 - BC2 (Search): Search orchestration
 - BC3 (Recommendation): Filtering and ranking
+
+Plus JWT-based authentication for protected endpoints.
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 
 from app.config import get_settings
-from app.api.routers import search, recommendations
+from app.api.routers import search, recommendations, auth
 
 # Configure logging
 logging.basicConfig(
@@ -33,8 +35,15 @@ app = FastAPI(
     
     ## Features
     
-    * **Search**: Find cafes within a specified radius
-    * **Recommend**: Get filtered and ranked cafe recommendations
+    * **Authentication**: JWT-based authentication for secure access
+    * **Search**: Find cafes within a specified radius (public)
+    * **Recommend**: Get filtered and ranked cafe recommendations (protected)
+    
+    ## Authentication
+    
+    1. Register a new account at `/api/v1/auth/register`
+    2. Login at `/api/v1/auth/login` to get a JWT token
+    3. Use the token in the Authorization header: `Bearer <token>`
     
     ## Bounded Contexts
     
@@ -59,6 +68,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(auth.router, prefix=settings.API_V1_PREFIX)
 app.include_router(search.router, prefix=settings.API_V1_PREFIX)
 app.include_router(recommendations.router, prefix=settings.API_V1_PREFIX)
 
@@ -72,6 +82,7 @@ async def root():
         "description": "Cafe Recommendation Service API",
         "endpoints": {
             "docs": "/docs",
+            "auth": f"{settings.API_V1_PREFIX}/auth",
             "search": f"{settings.API_V1_PREFIX}/search",
             "recommendations": f"{settings.API_V1_PREFIX}/recommendations"
         }

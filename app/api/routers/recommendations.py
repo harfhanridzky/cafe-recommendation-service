@@ -1,6 +1,8 @@
 """
 Recommendations API router.
 Endpoint for getting filtered and ranked cafe recommendations.
+
+This endpoint is protected and requires JWT authentication.
 """
 from fastapi import APIRouter, Query, Depends, HTTPException
 from typing import Annotated, List, Optional
@@ -11,7 +13,8 @@ from app.services.search_service import SearchService
 from app.services.recommendation_service import RecommendationService
 from app.infrastructure.google_places_client import GooglePlacesClient, GooglePlacesAPIError
 from app.config import get_settings
-from app.domain.models import Cafe, PriceRange
+from app.domain.models import Cafe, PriceRange, User
+from app.api.dependencies import CurrentUser
 
 logger = logging.getLogger(__name__)
 
@@ -72,10 +75,11 @@ def parse_price_ranges(price_range_str: Optional[str]) -> Optional[List[PriceRan
     "",
     response_model=RecommendationResponse,
     summary="Get cafe recommendations",
-    description="Get filtered and ranked cafe recommendations based on rating and price preferences",
+    description="Get filtered and ranked cafe recommendations based on rating and price preferences. **Requires JWT authentication.**",
     responses={
         200: {"description": "Successful recommendations", "model": RecommendationResponse},
         400: {"description": "Invalid request parameters", "model": ErrorResponse},
+        401: {"description": "Not authenticated - valid JWT token required"},
         500: {"description": "Internal server error", "model": ErrorResponse}
     }
 )
@@ -89,6 +93,7 @@ async def get_recommendations(
         Query(description="Comma-separated price ranges (e.g., 'CHEAP,MEDIUM,HIGH')")
     ] = None,
     limit: Annotated[int, Query(description="Maximum number of results", ge=1, le=100)] = 20,
+    current_user: CurrentUser = None,  # JWT Protection - requires authentication
     search_service: SearchService = Depends(get_search_service),
     recommendation_service: RecommendationService = Depends(get_recommendation_service)
 ):
@@ -102,13 +107,15 @@ async def get_recommendations(
     - **price_range**: Comma-separated price ranges (CHEAP, MEDIUM, HIGH, VERY_HIGH, LUXURY, UNKNOWN)
     - **limit**: Maximum results (1 to 100, default: 20)
     
+    **Authentication**: Requires valid JWT token in Authorization header.
+    
     Results are sorted by:
     1. Highest rating first
     2. Nearest distance for cafes with same rating
     """
     try:
         logger.info(
-            f"Recommendation request: lat={lat}, lng={lng}, radius={radius}, "
+            f"Recommendation request by user {current_user.email}: lat={lat}, lng={lng}, radius={radius}, "
             f"min_rating={min_rating}, price_range={price_range}, limit={limit}"
         )
         

@@ -2,9 +2,11 @@
 Domain models for the Cafe Recommendation Service.
 BC1 (Catalog): Domain entities and value objects representing cafes.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
+from datetime import datetime
+import uuid
 
 
 class PriceRange(str, Enum):
@@ -101,3 +103,23 @@ class Cafe:
             raise ValueError("Cafe id cannot be empty")
         if not self.name:
             raise ValueError("Cafe name cannot be empty")
+
+
+@dataclass
+class User:
+    """
+    Entity representing a user for authentication.
+    Simple user model with email and hashed password.
+    """
+    id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    email: str = ""
+    hashed_password: str = ""
+    is_active: bool = True
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    
+    def __post_init__(self):
+        """Validate required fields."""
+        if not self.email:
+            raise ValueError("User email cannot be empty")
+        if not self.hashed_password:
+            raise ValueError("User password hash cannot be empty")

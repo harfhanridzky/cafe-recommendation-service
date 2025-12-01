@@ -4,11 +4,13 @@ A FastAPI-based microservice for discovering and getting personalized cafe recom
 
 ## System Overview
 
-This service provides two main capabilities:
-1. **Search**: Find cafes near your current location
-2. **Recommend**: Get filtered and ranked cafe recommendations based on rating and price preferences
+This service provides three main capabilities:
+1. **Authentication**: Secure JWT-based authentication for protected endpoints
+2. **Search**: Find cafes near your current location (public)
+3. **Recommend**: Get filtered and ranked cafe recommendations (requires authentication)
 
 ### Key Features
+- **JWT-based authentication** for secure access to protected endpoints
 - Real-time cafe data from Google Places API
 - Distance calculation using Haversine formula
 - Smart filtering by rating and price range
@@ -52,22 +54,27 @@ TST_Tubes_Implementation/
 │   ├── config.py                            # Configuration and settings
 │   ├── domain/                              # BC1: Domain models
 │   │   ├── __init__.py
-│   │   └── models.py                        # Cafe, Location, Rating, PriceRange
+│   │   └── models.py                        # Cafe, Location, Rating, PriceRange, User
 │   ├── infrastructure/                      # External API integration
 │   │   ├── __init__.py
 │   │   └── google_places_client.py          # Google Places API wrapper
 │   ├── services/                            # Business logic
 │   │   ├── __init__.py
+│   │   ├── auth_service.py                  # JWT and password handling
+│   │   ├── user_service.py                  # User management
 │   │   ├── search_service.py                # BC2: Search orchestration
 │   │   └── recommendation_service.py        # BC3: Filtering & ranking
 │   ├── api/                                 # API layer
 │   │   ├── __init__.py
+│   │   ├── dependencies.py                  # JWT middleware/guards
 │   │   └── routers/
 │   │       ├── __init__.py
+│   │       ├── auth.py                      # /api/v1/auth endpoints
 │   │       ├── search.py                    # /api/v1/search endpoint
-│   │       └── recommendations.py           # /api/v1/recommendations endpoint
+│   │       └── recommendations.py           # /api/v1/recommendations endpoint (protected)
 │   └── schemas/                             # Pydantic models
 │       ├── __init__.py
+│       ├── auth.py                          # Authentication schemas
 │       └── responses.py                     # API response schemas
 ├── .env                                     # Environment variables (create from .env.example)
 ├── .env.example                             # Example environment file
@@ -148,8 +155,12 @@ Maps from Google's `price_level` (0-4):
    # Copy the example file
    cp .env.example .env
    
-   # Edit .env and add your Google API key
+   # Edit .env and add your Google API key and JWT secret
    # GOOGLE_API_KEY=your_actual_api_key_here
+   # JWT_SECRET_KEY=your_super_secret_jwt_key_here
+   
+   # Generate a secure JWT secret key:
+   python3 -c "import secrets; print(secrets.token_hex(32))"
    ```
 
 ### Running the Service
@@ -163,6 +174,115 @@ The service will be available at:
 - API: `http://localhost:8000`
 - Interactive API docs: `http://localhost:8000/docs`
 - ReDoc documentation: `http://localhost:8000/redoc`
+
+## Authentication
+
+This service uses JWT (JSON Web Tokens) for authentication. The `/api/v1/recommendations` endpoint is protected and requires a valid JWT token.
+
+### Authentication Flow
+
+1. **Register** a new user account
+2. **Login** to receive a JWT token
+3. **Use the token** in subsequent requests to protected endpoints
+
+### Endpoints
+
+| Endpoint | Method | Auth Required | Description |
+|----------|--------|---------------|-------------|
+| `/api/v1/auth/register` | POST | ❌ | Register new user |
+| `/api/v1/auth/login` | POST | ❌ | Login and get JWT token |
+| `/api/v1/auth/me` | GET | ✅ | Get current user info |
+| `/api/v1/search` | GET | ❌ | Search cafes (public) |
+| `/api/v1/recommendations` | GET | ✅ | Get recommendations (protected) |
+
+### 1. Register a New User
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "securepassword123"
+  }'
+```
+
+**Response:**
+```json
+{
+  "message": "User registered successfully",
+  "user": {
+    "id": "123e4567-e89b-12d3-a456-426614174000",
+    "email": "user@example.com",
+    "is_active": true
+  }
+}
+```
+
+### 2. Login to Get JWT Token
+
+```bash
+curl -X POST "http://localhost:8000/api/v1/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "securepassword123"
+  }'
+```
+
+**Response:**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "expires_in": 1800
+}
+```
+
+### 3. Use Token for Protected Endpoints
+
+Include the JWT token in the `Authorization` header:
+
+```bash
+# Get recommendations (protected endpoint)
+curl "http://localhost:8000/api/v1/recommendations?lat=-6.9175&lng=107.6191&min_rating=4.0" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+### 4. Get Current User Info
+
+```bash
+curl "http://localhost:8000/api/v1/auth/me" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+**Response:**
+```json
+{
+  "id": "123e4567-e89b-12d3-a456-426614174000",
+  "email": "user@example.com",
+  "is_active": true
+}
+```
+
+### Authentication Errors
+
+| Status Code | Description |
+|-------------|-------------|
+| 400 | Email already registered |
+| 401 | Invalid credentials or expired token |
+
+**Error Response Example:**
+```json
+{
+  "detail": "Invalid email or password"
+}
+```
+
+### JWT Token Details
+
+- **Algorithm**: HS256
+- **Expiration**: 30 minutes (configurable via `ACCESS_TOKEN_EXPIRE_MINUTES`)
+- **Payload**: Contains `user_id`, `email`, and `exp` (expiration timestamp)
 
 ## API Endpoints
 
@@ -215,6 +335,8 @@ curl "http://localhost:8000/api/v1/search?lat=-6.9175&lng=107.6191&radius=1500"
 
 **Endpoint**: `GET /api/v1/recommendations`
 
+**🔒 Authentication Required**: Yes (JWT Bearer token)
+
 **Description**: Get filtered and ranked cafe recommendations based on preferences.
 
 **Query Parameters**:
@@ -233,17 +355,26 @@ curl "http://localhost:8000/api/v1/search?lat=-6.9175&lng=107.6191&radius=1500"
 
 **Example Request 1**: Basic recommendations with minimum rating
 ```bash
-curl "http://localhost:8000/api/v1/recommendations?lat=-6.9175&lng=107.6191&min_rating=4.2"
+# First, get a token by logging in
+TOKEN=$(curl -s -X POST "http://localhost:8000/api/v1/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "user@example.com", "password": "securepassword123"}' | jq -r '.access_token')
+
+# Then use the token for recommendations
+curl "http://localhost:8000/api/v1/recommendations?lat=-6.9175&lng=107.6191&min_rating=4.2" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-**Example Request 2**: Filter by price range
+**Example Request 2**: Filter by price range (with authentication)
 ```bash
-curl "http://localhost:8000/api/v1/recommendations?lat=-6.9175&lng=107.6191&min_rating=4.0&price_range=MEDIUM,HIGH&limit=10"
+curl "http://localhost:8000/api/v1/recommendations?lat=-6.9175&lng=107.6191&min_rating=4.0&price_range=MEDIUM,HIGH&limit=10" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
-**Example Request 3**: Budget-friendly cafes
+**Example Request 3**: Budget-friendly cafes (with authentication)
 ```bash
-curl "http://localhost:8000/api/v1/recommendations?lat=-6.9175&lng=107.6191&price_range=CHEAP,MEDIUM&limit=5"
+curl "http://localhost:8000/api/v1/recommendations?lat=-6.9175&lng=107.6191&price_range=CHEAP,MEDIUM&limit=5" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 **Example Response**:
