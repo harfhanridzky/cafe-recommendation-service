@@ -52,3 +52,9 @@ htmlcov/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+
+# Test coverage
+.coverage
+htmlcov/
+coverage.xml
+.pytest_cache/

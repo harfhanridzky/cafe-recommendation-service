@@ -1,5 +1,11 @@
 # Cafe Recommendation Service
 
+![CI/CD Pipeline](https://github.com/harfhanridzky/cafe-recommendation-service/actions/workflows/ci.yml/badge.svg)
+![Python Version](https://img.shields.io/badge/python-3.10%20%7C%203.11-blue)
+![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-009688)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
 A FastAPI-based microservice for discovering and getting personalized cafe recommendations using Google Places API.
 
 ## System Overview
@@ -454,13 +460,129 @@ The API returns appropriate HTTP status codes:
 }
 ```
 
+## Testing
+
+This project follows Test-Driven Development (TDD) methodology with comprehensive unit tests and integration tests.
+
+### Test Coverage
+
+![Coverage](https://img.shields.io/badge/coverage-95%25%2B-brightgreen)
+
+The project maintains **95%+ test coverage** across all components:
+
+- **Domain Models Tests** (`tests/test_domain_models.py`)
+  - Location, Rating, PriceRange, Cafe, User models
+  - Boundary value testing
+  - Validation logic
+
+- **Service Layer Tests**
+  - Auth Service (`tests/test_auth_service.py`): Password hashing, JWT creation/verification
+  - User Service (`tests/test_user_service.py`): User management, duplicate handling
+  - Search Service (`tests/test_search_service.py`): Google Places API integration, distance calculation
+  - Recommendation Service (`tests/test_recommendation_service.py`): Filtering, sorting, limit logic
+
+- **API Endpoint Tests**
+  - Authentication API (`tests/test_api_auth.py`): Register, login, /me endpoint
+  - Search API (`tests/test_api_search.py`): Public search endpoint validation
+  - Recommendations API (`tests/test_api_recommendations.py`): Protected recommendations endpoint
+
+- **Integration Tests** (`tests/test_integration.py`)
+  - End-to-end user workflows
+  - Multi-user scenarios
+  - Data consistency across endpoints
+
+- **Security Tests** (`tests/test_security.py`)
+  - JWT token security
+  - Password security
+  - Input validation
+  - SQL injection prevention
+  - XSS protection
+
+### Running Tests
+
+**Run all tests:**
+```bash
+pytest
+```
+
+**Run with coverage report:**
+```bash
+pytest --cov=app --cov-report=term-missing
+```
+
+**Run specific test file:**
+```bash
+pytest tests/test_auth_service.py -v
+```
+
+**Run specific test class:**
+```bash
+pytest tests/test_api_auth.py::TestAuthRegister -v
+```
+
+**Run tests by marker:**
+```bash
+pytest -m unit          # Run only unit tests
+pytest -m integration   # Run only integration tests
+pytest -m security      # Run only security tests
+```
+
+**Generate HTML coverage report:**
+```bash
+pytest --cov=app --cov-report=html
+open htmlcov/index.html
+```
+
+### CI/CD Pipeline
+
+The project uses **GitHub Actions** for continuous integration:
+
+- ✅ Automated testing on push and pull requests
+- ✅ Code quality checks (flake8, black, isort, mypy)
+- ✅ Test coverage verification (95% minimum)
+- ✅ Security scanning (safety, bandit)
+- ✅ Multi-Python version testing (3.10, 3.11)
+- ✅ Coverage reporting to Codecov
+
+View the CI/CD configuration: `.github/workflows/ci.yml`
+
+### Code Quality Tools
+
+**Linting:**
+```bash
+flake8 app/
+```
+
+**Code Formatting:**
+```bash
+black app/
+```
+
+**Import Sorting:**
+```bash
+isort app/
+```
+
+**Type Checking:**
+```bash
+mypy app/ --ignore-missing-imports
+```
+
+**Run all quality checks:**
+```bash
+./security_check.sh
+```
+
 ## Development
 
-### Code Quality
+### Code Quality Standards
 - Strong typing throughout (Python type hints)
 - Separation of concerns (domain, infrastructure, services, API)
 - Proper error handling and logging
 - Clean mapping between layers
+- Test-Driven Development (TDD) approach
+- 95%+ test coverage requirement
+- Automated CI/CD pipeline
 
 ### Adding New Features
 
