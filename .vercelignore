@@ -1,0 +1,19 @@
+# .vercelignore - Files to exclude from Vercel deployment
+tests/
+*.pyc
+__pycache__/
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+.env
+.env.local
+.venv/
+venv/
+env/
+*.log
+.DS_Store
+.git/
+.github/
+diagrams/
+docs/

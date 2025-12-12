@@ -343,6 +343,40 @@ This project is for educational purposes.
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+## 🚀 Deployment
+
+### Deploy to Vercel (Recommended)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/harfhanridzky/cafe-recommendation-service)
+
+**Quick Deploy Steps:**
+1. Click the "Deploy with Vercel" button above
+2. Connect your GitHub account
+3. Add environment variables:
+   - `GOOGLE_API_KEY`
+   - `JWT_SECRET_KEY`
+   - `JWT_ALGORITHM=HS256`
+   - `ACCESS_TOKEN_EXPIRE_MINUTES=30`
+4. Deploy!
+
+**Or via Vercel CLI:**
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Deploy
+vercel
+
+# Deploy to production
+vercel --prod
+```
+
+📖 **Full deployment guide**: See [VERCEL_DEPLOYMENT.md](VERCEL_DEPLOYMENT.md) for detailed instructions.
+
+**Your API will be live at**: `https://your-project.vercel.app/docs`
+
+---
+
 ## 📞 Support
 
 - **Repository**: https://github.com/harfhanridzky/cafe-recommendation-service
