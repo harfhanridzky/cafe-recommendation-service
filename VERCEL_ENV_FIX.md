@@ -1,25 +1,38 @@
 # ⚠️ Vercel Deployment - Environment Variables Fix
 
-## Problem
-The deployment failed with error:
+## Problems Encountered
+
+### Problem 1: Missing Environment Variables
 ```
 ValidationError: 1 validation error for Settings
 GOOGLE_API_KEY
 Field required [type=missing, input_value={}, input_type=dict]
 ```
 
-## Solution Applied
+### Problem 2: ASGI Handler Error
+```
+TypeError: issubclass() arg 1 must be a class
+Python process exited with exit status: 1
+```
 
-### 1. Fixed `app/config.py`
+## Solutions Applied
+
+### 1. Fixed `app/config.py` (Environment Variables Issue)
 - Changed `GOOGLE_API_KEY` from required field to optional with default empty string
 - Added explicit `os.getenv()` calls to read environment variables
 - Added custom `__init__` method to prioritize OS environment variables (for Vercel)
 - Added warning message if `GOOGLE_API_KEY` is not set
 
-### 2. Fixed `vercel.json`
+### 2. Fixed `vercel.json` (Build Configuration)
 - Changed build source from `app/main.py` to `api/index.py`
 - Removed `env` section (environment variables should be set in Vercel dashboard)
 - Simplified routes configuration
+
+### 3. Fixed `api/index.py` (ASGI Handler Issue) ⭐ NEW
+- **Problem**: FastAPI is ASGI, but Vercel expected WSGI/HTTP handler
+- **Solution**: Wrapped FastAPI app with `Mangum` ASGI adapter
+- **Changed**: `handler = app` → `handler = Mangum(app, lifespan="off")`
+- **Why**: Mangum converts ASGI (FastAPI) to AWS Lambda/Vercel compatible format
 
 ## How to Set Environment Variables in Vercel
 
