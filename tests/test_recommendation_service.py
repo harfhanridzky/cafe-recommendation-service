@@ -17,60 +17,55 @@ class TestRecommendationService:
         """Create sample cafes for testing."""
         return [
             Cafe(
-                place_id="cafe1",
+                id="cafe1",
                 name="Budget Cafe",
+                address="Address 1",
                 location=Location(latitude=-6.2088, longitude=106.8456),
                 rating=Rating(3.5),
                 price_range=PriceRange.CHEAP,
-                user_ratings_total=50,
-                vicinity="Address 1",
-                distance_km=1.0
+                distance_meters=1000.0
             ),
             Cafe(
-                place_id="cafe2",
+                id="cafe2",
                 name="Premium Cafe",
+                address="Address 2",
                 location=Location(latitude=-6.2100, longitude=106.8470),
                 rating=Rating(4.8),
-                price_range=PriceRange.EXPENSIVE,
-                user_ratings_total=200,
-                vicinity="Address 2",
-                distance_km=2.0
+                price_range=PriceRange.HIGH,
+                distance_meters=2000.0
             ),
             Cafe(
-                place_id="cafe3",
+                id="cafe3",
                 name="Mid-range Cafe",
+                address="Address 3",
                 location=Location(latitude=-6.2110, longitude=106.8480),
                 rating=Rating(4.2),
-                price_range=PriceRange.MODERATE,
-                user_ratings_total=100,
-                vicinity="Address 3",
-                distance_km=1.5
+                price_range=PriceRange.MEDIUM,
+                distance_meters=1500.0
             ),
             Cafe(
-                place_id="cafe4",
+                id="cafe4",
                 name="Nearby Budget",
+                address="Address 4",
                 location=Location(latitude=-6.2090, longitude=106.8460),
                 rating=Rating(4.0),
                 price_range=PriceRange.CHEAP,
-                user_ratings_total=75,
-                vicinity="Address 4",
-                distance_km=0.5
+                distance_meters=500.0
             ),
             Cafe(
-                place_id="cafe5",
+                id="cafe5",
                 name="Luxury Cafe",
+                address="Address 5",
                 location=Location(latitude=-6.2120, longitude=106.8490),
                 rating=Rating(4.9),
-                price_range=PriceRange.VERY_EXPENSIVE,
-                user_ratings_total=300,
-                vicinity="Address 5",
-                distance_km=3.0
+                price_range=PriceRange.VERY_HIGH,
+                distance_meters=3000.0
             )
         ]
     
     def test_filter_by_rating_minimum(self, service, sample_cafes):
         """Test filtering cafes by minimum rating."""
-        result = service.filter_recommendations(
+        result = service.filter_and_rank_cafes(
             cafes=sample_cafes,
             min_rating=4.5
         )
@@ -82,7 +77,7 @@ class TestRecommendationService:
     
     def test_filter_by_price_range(self, service, sample_cafes):
         """Test filtering cafes by price range."""
-        result = service.filter_recommendations(
+        result = service.filter_and_rank_cafes(
             cafes=sample_cafes,
             price_range=PriceRange.CHEAP
         )
@@ -94,7 +89,7 @@ class TestRecommendationService:
     
     def test_filter_by_rating_and_price(self, service, sample_cafes):
         """Test filtering by both rating and price range."""
-        result = service.filter_recommendations(
+        result = service.filter_and_rank_cafes(
             cafes=sample_cafes,
             min_rating=4.0,
             price_range=PriceRange.CHEAP
@@ -107,14 +102,14 @@ class TestRecommendationService:
     
     def test_filter_no_criteria(self, service, sample_cafes):
         """Test filtering without any criteria returns all cafes."""
-        result = service.filter_recommendations(cafes=sample_cafes)
+        result = service.filter_and_rank_cafes(cafes=sample_cafes)
         
         assert len(result) == len(sample_cafes)
         assert result == sample_cafes
     
     def test_filter_no_matches(self, service, sample_cafes):
         """Test filtering with criteria that match no cafes."""
-        result = service.filter_recommendations(
+        result = service.filter_and_rank_cafes(
             cafes=sample_cafes,
             min_rating=5.0
         )
@@ -123,7 +118,7 @@ class TestRecommendationService:
     
     def test_filter_empty_list(self, service):
         """Test filtering empty cafe list."""
-        result = service.filter_recommendations(
+        result = service.filter_and_rank_cafes(
             cafes=[],
             min_rating=4.0
         )
@@ -132,7 +127,7 @@ class TestRecommendationService:
     
     def test_sort_by_rating(self, service, sample_cafes):
         """Test sorting cafes by rating (descending)."""
-        result = service.filter_recommendations(
+        result = service.filter_and_rank_cafes(
             cafes=sample_cafes,
             sort_by="rating"
         )
@@ -145,7 +140,7 @@ class TestRecommendationService:
     
     def test_sort_by_distance(self, service, sample_cafes):
         """Test sorting cafes by distance (ascending)."""
-        result = service.filter_recommendations(
+        result = service.filter_and_rank_cafes(
             cafes=sample_cafes,
             sort_by="distance"
         )
@@ -158,7 +153,7 @@ class TestRecommendationService:
     
     def test_sort_by_price(self, service, sample_cafes):
         """Test sorting cafes by price (ascending)."""
-        result = service.filter_recommendations(
+        result = service.filter_and_rank_cafes(
             cafes=sample_cafes,
             sort_by="price"
         )
@@ -168,11 +163,11 @@ class TestRecommendationService:
         assert prices == sorted(prices)
         # CHEAP (1) should come first, VERY_EXPENSIVE (4) last
         assert result[0].price_range == PriceRange.CHEAP
-        assert result[-1].price_range == PriceRange.VERY_EXPENSIVE
+        assert result[-1].price_range == PriceRange.VERY_HIGH
     
     def test_limit_results(self, service, sample_cafes):
         """Test limiting number of recommendations."""
-        result = service.filter_recommendations(
+        result = service.filter_and_rank_cafes(
             cafes=sample_cafes,
             limit=3
         )
@@ -181,7 +176,7 @@ class TestRecommendationService:
     
     def test_limit_exceeds_available(self, service, sample_cafes):
         """Test limit larger than available cafes."""
-        result = service.filter_recommendations(
+        result = service.filter_and_rank_cafes(
             cafes=sample_cafes,
             limit=100
         )
@@ -190,7 +185,7 @@ class TestRecommendationService:
     
     def test_limit_zero(self, service, sample_cafes):
         """Test limit of zero returns empty list."""
-        result = service.filter_recommendations(
+        result = service.filter_and_rank_cafes(
             cafes=sample_cafes,
             limit=0
         )
@@ -199,7 +194,7 @@ class TestRecommendationService:
     
     def test_combined_filter_sort_limit(self, service, sample_cafes):
         """Test combining filter, sort, and limit."""
-        result = service.filter_recommendations(
+        result = service.filter_and_rank_cafes(
             cafes=sample_cafes,
             min_rating=4.0,
             sort_by="rating",
@@ -214,7 +209,7 @@ class TestRecommendationService:
     
     def test_filter_with_price_and_sort_by_distance(self, service, sample_cafes):
         """Test filtering by price and sorting by distance."""
-        result = service.filter_recommendations(
+        result = service.filter_and_rank_cafes(
             cafes=sample_cafes,
             price_range=PriceRange.CHEAP,
             sort_by="distance"
@@ -227,7 +222,7 @@ class TestRecommendationService:
     
     def test_invalid_sort_by(self, service, sample_cafes):
         """Test invalid sort_by parameter uses default (no sorting)."""
-        result = service.filter_recommendations(
+        result = service.filter_and_rank_cafes(
             cafes=sample_cafes,
             sort_by="invalid_field"
         )
@@ -237,7 +232,7 @@ class TestRecommendationService:
     
     def test_rating_boundary_4_0(self, service, sample_cafes):
         """Test filtering with rating exactly at boundary."""
-        result = service.filter_recommendations(
+        result = service.filter_and_rank_cafes(
             cafes=sample_cafes,
             min_rating=4.0
         )
@@ -252,16 +247,16 @@ class TestRecommendationService:
             Cafe("c1", "C1", Location(-6.2088, 106.8456), Rating(4.0), 
                  PriceRange.CHEAP, 50, "A1", 1.0),
             Cafe("c2", "C2", Location(-6.2088, 106.8456), Rating(4.0), 
-                 PriceRange.MODERATE, 50, "A2", 1.0),
+                 PriceRange.MEDIUM, 50, "A2", 1.0),
             Cafe("c3", "C3", Location(-6.2088, 106.8456), Rating(4.0), 
-                 PriceRange.EXPENSIVE, 50, "A3", 1.0),
+                 PriceRange.HIGH, 50, "A3", 1.0),
             Cafe("c4", "C4", Location(-6.2088, 106.8456), Rating(4.0), 
-                 PriceRange.VERY_EXPENSIVE, 50, "A4", 1.0),
+                 PriceRange.VERY_HIGH, 50, "A4", 1.0),
         ]
         
-        for price in [PriceRange.CHEAP, PriceRange.MODERATE, 
-                      PriceRange.EXPENSIVE, PriceRange.VERY_EXPENSIVE]:
-            result = service.filter_recommendations(cafes=cafes, price_range=price)
+        for price in [PriceRange.CHEAP, PriceRange.MEDIUM, 
+                      PriceRange.HIGH, PriceRange.VERY_HIGH]:
+            result = service.filter_and_rank_cafes(cafes=cafes, price_range=price)
             assert len(result) == 1
             assert result[0].price_range == price
     
@@ -270,7 +265,7 @@ class TestRecommendationService:
         original_count = len(sample_cafes)
         original_first_name = sample_cafes[0].name
         
-        result = service.filter_recommendations(
+        result = service.filter_and_rank_cafes(
             cafes=sample_cafes,
             min_rating=4.5,
             sort_by="rating"
@@ -287,14 +282,14 @@ class TestRecommendationService:
         """Test that sorting is stable for equal values."""
         cafes = [
             Cafe("c1", "Cafe A", Location(-6.2088, 106.8456), Rating(4.0), 
-                 PriceRange.MODERATE, 50, "Addr", 1.0),
+                 PriceRange.MEDIUM, 50, "Addr", 1.0),
             Cafe("c2", "Cafe B", Location(-6.2088, 106.8456), Rating(4.0), 
-                 PriceRange.MODERATE, 50, "Addr", 1.0),
+                 PriceRange.MEDIUM, 50, "Addr", 1.0),
             Cafe("c3", "Cafe C", Location(-6.2088, 106.8456), Rating(4.0), 
-                 PriceRange.MODERATE, 50, "Addr", 1.0),
+                 PriceRange.MEDIUM, 50, "Addr", 1.0),
         ]
         
-        result = service.filter_recommendations(cafes=cafes, sort_by="rating")
+        result = service.filter_and_rank_cafes(cafes=cafes, sort_by="rating")
         
         # Should maintain original order for equal ratings
         names = [cafe.name for cafe in result]
@@ -303,7 +298,7 @@ class TestRecommendationService:
     def test_complex_scenario(self, service, sample_cafes):
         """Test complex real-world scenario."""
         # User wants: cheap/moderate cafes, rating >= 3.8, sorted by distance, top 3
-        result = service.filter_recommendations(
+        result = service.filter_and_rank_cafes(
             cafes=sample_cafes,
             min_rating=3.8,
             sort_by="distance",
