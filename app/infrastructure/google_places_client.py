@@ -29,9 +29,7 @@ class GooglePlacesClient:
         Args:
             api_key: Google Places API key
         """
-        if not api_key:
-            raise ValueError("Google API key is required")
-        
+        # Allow empty API key for testing, but will fail on actual API calls
         self.api_key = api_key
         self.client = httpx.AsyncClient(timeout=30.0)
     
@@ -59,6 +57,13 @@ class GooglePlacesClient:
         Raises:
             GooglePlacesAPIError: If the API request fails
         """
+        # Validate API key is set when actually making API calls
+        if not self.api_key:
+            raise GooglePlacesAPIError(
+                "Google API key is not configured. "
+                "Please set GOOGLE_API_KEY environment variable."
+            )
+        
         url = f"{self.BASE_URL}/nearbysearch/json"
         
         params = {
@@ -118,6 +123,13 @@ class GooglePlacesClient:
         Raises:
             GooglePlacesAPIError: If the API request fails
         """
+        # Validate API key is set when actually making API calls
+        if not self.api_key:
+            raise GooglePlacesAPIError(
+                "Google API key is not configured. "
+                "Please set GOOGLE_API_KEY environment variable."
+            )
+        
         url = f"{self.BASE_URL}/details/json"
         
         params = {
